@@ -362,6 +362,7 @@ var Labels = Component.extend({
         //console.log("EVENT change:marker:size:max");
         if(!_this._readyOnce) return;
         _this.updateLabelSizeLimits();
+        if(_this._toolContext.model.time.splash) return;
         _this.updateLabelsOnlyTextSize();
       }
     if(context.model.ui.chart.labels.hasOwnProperty('removeLabelBox'))
@@ -453,7 +454,6 @@ var Labels = Component.extend({
   },
   
   setScales: function(xScale, yScale) {
-    if(!this._readyOnce) return;
     this._xScale = xScale;
     this._yScale = yScale;
   },
@@ -547,7 +547,7 @@ var Labels = Component.extend({
 
 
       if(cached.scaledS0 == null || cached.labelX0 == null || cached.labelY0 == null) { //initialize label once
-        if(valueS) cached.scaledS0 = utils.areaToRadius(this._toolContext.sScale(valueS));
+        if(valueS || valueS === 0) cached.scaledS0 = utils.areaToRadius(this._toolContext.sScale(valueS));
         cached.labelX0 = valueX;
         cached.labelY0 = valueY;
         cached.valueLST = valueLST;
