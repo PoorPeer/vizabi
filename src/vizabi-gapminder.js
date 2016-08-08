@@ -27,9 +27,6 @@ import AgePyramid from 'tools/agepyramid';
 import JOINTPyramidLine from 'tools/joint_pyramidline';
 import JOINTCartogramLine from 'tools/joint_cartogramline';
 
-//waffle reader
-import {waffle as WaffleReader} from 'readers/_index';
-
 var language = {
   id: "en",
   strings: {}
@@ -596,7 +593,7 @@ BubbleChart.define('default_model', {
       dim: "geo",
       show: {
         _defs_: {
-          "geo.cat": ["country", "unstate"]
+            "geo.is--country": true
         }
       }
     },
@@ -604,7 +601,7 @@ BubbleChart.define('default_model', {
       dim: "geo",
       show: {
         _defs_: {
-          "geo.cat": ["world_4region"]
+          "geo.is--world_4region": true
         }
       }
     },
@@ -1301,9 +1298,6 @@ Cartogram.define('default_model', {
     presentation: false
   }
 });
-
-//Waffle Server Reader custom path
-WaffleReader.define('basepath', globals.ext_resources.host + globals.ext_resources.dataPath);
 
 //preloading mountain chart precomputed shapes
 MCComponent.define("preload", function(done) {
