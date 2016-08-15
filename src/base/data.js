@@ -260,18 +260,50 @@ var Data = Class.extend({
     return this._collection[queryId][what][id];
   },
 
+  loadConceptProps: function(reader, callback){
+    var _this = this;
+    
+    var query = {
+      grouping: [],
+      from: "concepts",
+      select: {
+        key: ["concept"],
+        value: ["concept","concept_type","indicator_url","color","scales","interpolation","tags"]
+      }
+    };
+    
+    this.load(query, "en", reader).then(function(dataId) {
+      _this.conceptPropsDataID = dataId;
+      _this.conceptDictionary = {_default: {concept_type: "string", scales: ["ordinal"], tags: "_root"} };
+      _this.get(dataId).forEach(function(d){
+        var concept = {};
+        concept["use"] = d.concept_type=="measure"?"indicator":"property";
+        concept["sourceLink"] = d.indicator_url;
+        concept["color"] = JSON.parse(d.color);
+        concept["scales"] = JSON.parse(d.scales);
+        concept["interpolation"] = d.interpolation;
+        concept["tags"] = d.tags;
+        _this.conceptDictionary[d.concept] = concept;
+      });
+      
+      callback(_this.conceptDictionary);
+    }, function(err) {
+      utils.warn('Problem with query: ', JSON.stringify(query));
+    });
+  },
+  
   getConceptprops: function(which){
-      if(!globals.conceptprops || !globals.conceptprops.indicatorsDB) return {};
-      return which ? globals.conceptprops.indicatorsDB[which] : globals.conceptprops.indicatorsDB;
+     if(which) {
+       if(this.conceptDictionary[which]) {
+         return this.conceptDictionary[which];
+       }else{
+         return utils.warn("The concept " + which + " is not found in the dictionary");
+       }
+     }else{
+       return this.conceptDictionary;
+     }
   },
     
-  /**
-   * Gets the concept properties of all hooks
-   * @returns {Object} concept properties
-   */
-  getIndicatorsTree: function() {
-    return globals.conceptprops && globals.conceptprops.indicatorsTree ? globals.conceptprops.indicatorsTree : {};
-  },
 
   getFrames: function(queryId, framesArray) {
     var _this = this;

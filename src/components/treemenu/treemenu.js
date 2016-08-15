@@ -684,10 +684,9 @@ var TreeMenu = Component.extend({
     });
 
     
-    this.model.marker_tags.getFrame(this.model.time.value, function(tagProps) { 
-      var tagKeys = _this.model.marker_tags.getKeys();
-      _this._buildIndicatorsTree(tagKeys, tagProps);
-    })
+    //TODO: hack! potentially unsafe operation here
+    var tags = this.model.marker_tags.getDataManager().get(this.model.marker_tags.label._dataId)
+    _this._buildIndicatorsTree(tags);
     
     _this._enableSearch();
 
@@ -695,11 +694,12 @@ var TreeMenu = Component.extend({
   },
   
   
-  _buildIndicatorsTree: function(tagKeys, tagProps){
+  _buildIndicatorsTree: function(tagsArray){
       
       var ROOT = "_root";
       var DEFAULT = "_default";
       var UNCLASSIFIED = "_unclassified";
+      var ADVANCED = "advanced";
       
       //init the dictionary of tags
       var tags = {};
@@ -707,7 +707,7 @@ var TreeMenu = Component.extend({
       tags[UNCLASSIFIED] = {id: UNCLASSIFIED, children:[]};
       
       //populate the dictionary of tags
-      tagKeys.forEach(function(tag){tags[tag] = {id: tag, children: []};})
+      tagsArray.forEach(function(tag){tags[tag.tag] = {id: tag.tag, children: []};})
       
       //init the tag tree
       indicatorsTree = tags[ROOT];
@@ -715,24 +715,26 @@ var TreeMenu = Component.extend({
       indicatorsTree.children.push(tags[UNCLASSIFIED]);
       
       //populate the tag tree
-      tagKeys.forEach(function(tag){
-        if(!tagProps.parent[tag]) {
+      tagsArray.forEach(function(tag){
+        if(!tag.parent || !tags[tag.parent]) {
           // add tag to a root
-          indicatorsTree.children.push(tags[tag]);
+          indicatorsTree.children.push(tags[tag.tag]);
         } else {
           //add tag to a branch
-          tags[tagProps.parent[tag]].children.push(tags[tag])
+          tags[tag.parent].children.push(tags[tag.tag])
         }
       })
       
       //add entries to different branches in the tree according to their tags
       utils.forEach(this.model.marker.getConceptprops(), function(entry, id){
-        if(!entry.tags) entry.tags = ROOT;
+        //if entry's tag are empty don't include it in the menu
+        if(!entry.tags) return; //entry.tags = UNCLASSIFIED;
         entry.tags.split(",").forEach(function(tag){
           if(tags[tag.trim()]) {
             tags[tag.trim()].children.push({id: id});
           } else {
             //if entry's tag is not found in the tag dictionary
+            console.log(tag, "not found")
             tags[UNCLASSIFIED].children.push({id: id});
           }
         });  

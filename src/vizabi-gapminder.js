@@ -614,7 +614,7 @@ BubbleChart.define('default_model', {
       shape: "circle",
       label: {
         use: "property",
-        which: "geo.name"
+        which: "name"
       },
       size_label: {
         use: "constant",
@@ -645,10 +645,10 @@ BubbleChart.define('default_model', {
       },
       color: {
         use: "property",
-        which: "geo.world_4region",
+        which: "world_4region",
         scaleType: "ordinal",
         allow: {
-          names: ["!geo.name"]
+          names: ["!name"]
         }
       },
       size: {
@@ -668,7 +668,7 @@ BubbleChart.define('default_model', {
         shape: "svg",
         label: {
           use: "property",
-          which: "geo.name"
+          which: "name"
         },
         geoshape: {
           use: "property",
@@ -1382,24 +1382,20 @@ Tool.define("preload", function(promise) {
       return;
     }
     
-    d3.json(conceptprops_path, function(conceptprops) {
-
-      globals.conceptprops = conceptprops;
-        
-      if(!globals.conceptprops.indicatorsDB["_default"]) globals.conceptprops.indicatorsDB["_default"] = {
-          "use": "constant",
-          "scales": ["ordinal"]
-      }
+    var reader = _this.model.data.getPlainObject();
+    reader.parsers = [];
+    
+    _this.model.getDataManager().loadConceptProps(reader, function(concepts) {
 
       // TODO: REMOVE THIS HACK
       // We are currently saving concept properties info to default state manually in order
       // to produce small URLs considering some of the info in concept properties to be default
       // we need a consistent way to add concept properties to Vizabi
-      addMinMax("axis_x");
-      addMinMax("axis_y");
-      addMinMax("size");
-      addMinMax("size_label");
-      addPalettes("color");
+      addMinMax(concepts, "axis_x");
+      addMinMax(concepts, "axis_y");
+      addMinMax(concepts, "size");
+      addMinMax(concepts, "size_label");
+      addPalettes(concepts, "color");
 
       promise.resolve();
 
@@ -1407,24 +1403,24 @@ Tool.define("preload", function(promise) {
   });
 
   // TODO: REMOVE THIS HACK (read above)
-  function addPalettes(hook) {
-    //protection in case id state or marker or [hook] is undefined
+  function addPalettes(concepts, hook) {
+    //protection in case if state or marker or [hook] is undefined
     if(!((_this.default_model.state||{}).marker||{})[hook]) return;
     
     var color = _this.default_model.state.marker[hook];
-    var palette = ((globals.conceptprops.indicatorsDB[color.which]||{}).color||{}).palette||{};
-    var paletteLabels = ((globals.conceptprops.indicatorsDB[color.which]||{}).color||{}).paletteLabels||{};
+    var palette = ((concepts[color.which]||{}).color||{}).palette||{};
+    var paletteLabels = ((concepts[color.which]||{}).color||{}).paletteLabels||{};
     color.palette = utils.extend({}, color.palette, palette);
     color.paletteLabels = utils.clone(paletteLabels);
   }
 
-  function addMinMax(hook) {
-    //protection in case id state or marker or [hook] is undefined
+  function addMinMax(concepts, hook) {
+    //protection in case if state or marker or [hook] is undefined
     if(!((_this.default_model.state||{}).marker||{})[hook]) return;
     
     var axis = _this.default_model.state.marker[hook];
-    if(axis.use === "indicator" && globals.conceptprops.indicatorsDB[axis.which] && globals.conceptprops.indicatorsDB[axis.which].domain) {
-      var domain = globals.conceptprops.indicatorsDB[axis.which].domain;
+    if(axis.use === "indicator" && concepts[axis.which] && concepts[axis.which].domain) {
+      var domain = concepts[axis.which].domain;
       axis.domainMin = axis.domainMin || domain[0];
       axis.domainMax = axis.domainMax || domain[1];
       axis.zoomedMin = axis.zoomedMin || axis.domainMin || domain[0];
