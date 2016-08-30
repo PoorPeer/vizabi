@@ -100,7 +100,7 @@ var ColorLegend = Component.extend({
     this.KEY = this.model.state.entities.getDimension();
     this.colorModel = this.model.state.marker.color;
     
-    OPACITY_REGULAR = this.model.state.entities.opacityRegular;
+//    OPACITY_REGULAR = 0.8;
     OPACITY_DIM = this.model.state.entities.opacitySelectDim;
     OPACITY_HIGHLIGHT = 1;
     
@@ -216,7 +216,9 @@ var ColorLegend = Component.extend({
 
         }
           
-        labelScale = d3.scale[this.colorModel.scaleType == "time" ? "linear" : this.colorModel.scaleType]()
+        var labelScaletype = (d3.min(domain)<=0 && d3.max(domain)>=0 && this.colorModel.scaleType === "log")? "genericLog" : this.colorModel.scaleType;
+        
+        labelScale = d3.scale[labelScaletype == "time" ? "linear" : labelScaletype]()
           .domain(domain)
           .range(range);
           

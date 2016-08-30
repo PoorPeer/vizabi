@@ -10,7 +10,7 @@ export default Class.extend({
     this.actionsQueue = {};
     this.entityTrails = {};
     this.trailsData = [];
-
+    this.trailTransitions = {};
   },
 
   toggle: function(arg) {
@@ -49,7 +49,7 @@ export default Class.extend({
         r["selectedEntityData"] = d;
         return r;
       });
-      
+      _this.trailTransitions = {};
       var _trails = _context.bubbleContainer.selectAll('g.vzb-bc-entity')
         .data(_this.trailsData, function(d) {
           return(d[KEY]);
@@ -92,7 +92,7 @@ export default Class.extend({
               pointer.time = segment.t;
 
               _context._axisProjections(pointer);
-              _context.labels.highlight(d, true);
+              _context._labels.highlight(d, true);
               var text = _context.model.time.timeFormat(segment.t);
               var selectedData = utils.find(_context.model.entities.select, function(f) {
                 return f[KEY] == d[KEY]
@@ -115,7 +115,7 @@ export default Class.extend({
               _context._axisProjections();
               _context._setTooltip();
               _context._setBubbleCrown();
-              _context.labels.highlight(null, false);
+              _context._labels.highlight(null, false);
               d3.select(this).style("opacity", _context.model.entities.opacityRegular);
             })
             .each(function(segment, index) {
@@ -216,11 +216,19 @@ export default Class.extend({
       if(segment.valueY==null || segment.valueX==null || segment.valueS==null) return;
 
       var view = d3.select(this);
-      view.select("circle")
-        //.transition().duration(duration).ease("linear")
-        .attr("cy", _context.yScale(segment.valueY))
-        .attr("cx", _context.xScale(segment.valueX))
-        .attr("r", utils.areaToRadius(_context.sScale(segment.valueS)));
+      if (duration) {
+        view.select("circle").interrupt()
+          .transition().duration(duration).ease("linear")
+          .attr("cy", _context.yScale(segment.valueY))
+          .attr("cx", _context.xScale(segment.valueX))
+          .attr("r", utils.areaToRadius(_context.sScale(segment.valueS)));
+      } else {
+        view.select("circle")
+          .transition().duration(duration).ease("linear")
+          .attr("cy", _context.yScale(segment.valueY))
+          .attr("cx", _context.xScale(segment.valueX))
+          .attr("r", utils.areaToRadius(_context.sScale(segment.valueS)));
+      }
 
       if(!this.nextSibling) return;
       var next = d3.select(this.nextSibling).datum();
@@ -231,14 +239,24 @@ export default Class.extend({
           Math.pow(_context.xScale(segment.valueX) - _context.xScale(next.valueX),2) +
           Math.pow(_context.yScale(segment.valueY) - _context.yScale(next.valueY),2)
       );
-      view.select("line")
-        //.transition().duration(duration).ease("linear")
-        .attr("x1", _context.xScale(next.valueX))
-        .attr("y1", _context.yScale(next.valueY))
-        .attr("x2", _context.xScale(segment.valueX))
-        .attr("y2", _context.yScale(segment.valueY))
-        .style("stroke-dasharray", lineLength)
-        .style("stroke-dashoffset", utils.areaToRadius(_context.sScale(segment.valueS)));
+      if (duration) {
+        view.select("line").interrupt()
+          .transition().duration(duration).ease("linear")
+          .attr("x1", _context.xScale(next.valueX))
+          .attr("y1", _context.yScale(next.valueY))
+          .attr("x2", _context.xScale(segment.valueX))
+          .attr("y2", _context.yScale(segment.valueY))
+          .style("stroke-dasharray", lineLength)
+          .style("stroke-dashoffset", utils.areaToRadius(_context.sScale(segment.valueS)));
+      } else {
+        view.select("line")
+          .attr("x1", _context.xScale(next.valueX))
+          .attr("y1", _context.yScale(next.valueY))
+          .attr("x2", _context.xScale(segment.valueX))
+          .attr("y2", _context.yScale(segment.valueY))
+          .style("stroke-dasharray", lineLength)
+          .style("stroke-dashoffset", utils.areaToRadius(_context.sScale(segment.valueS)));
+      }
     });
   },
 
@@ -289,10 +307,17 @@ export default Class.extend({
     var firstVisible = true;
     var trailStartTime = _context.model.time.timeFormat.parse("" + d.selectedEntityData.trailStartTime);
 
-    if (_context.time - trailStartTime < 0) { // move trail start time with trail label back if need
-      d.selectedEntityData.trailStartTime = _context.model.time.timeFormat(_context.time);
-      trailStartTime = _context.model.time.timeFormat.parse("" + d.selectedEntityData.trailStartTime);
-      var cache = _context.labels.cached[d[KEY]];
+    if (_context.time - trailStartTime < 0 || _context.model.time.start - trailStartTime > 0) {
+      if (_context.time - trailStartTime < 0) { 
+        // move trail start time with trail label back if need
+        d.selectedEntityData.trailStartTime = _context.model.time.timeFormat(_context.time);
+        trailStartTime = _context.model.time.timeFormat.parse("" + d.selectedEntityData.trailStartTime);
+      } else {
+        // move trail start time with trail label to start time if need
+        d.selectedEntityData.trailStartTime = _context.model.time.timeFormat(_context.model.time.start);
+        trailStartTime = _context.model.time.timeFormat.parse("" + d.selectedEntityData.trailStartTime);
+      }
+      var cache = _context._labels.cached[d[KEY]];
       cache.labelX0 = _context.frame.axis_x[d[KEY]];
       cache.labelY0 = _context.frame.axis_y[d[KEY]];
       var valueS = _context.frame.size[d[KEY]];
@@ -301,6 +326,7 @@ export default Class.extend({
       cache.scaledC0 = valueC != null ? _context.cScale(valueC) : _context.COLOR_WHITEISH;
       _context._updateLabel(d, 0, _context.frame.axis_x[d[KEY]], _context.frame.axis_y[d[KEY]], _context.frame.size[d[KEY]], _context.frame.color[d[KEY]], _context.frame.label[d[KEY]], _context.frame.size_label[d[KEY]], 0, true);
     }
+
     trail.each(function(segment, index) {
       // segment is transparent if it is after current time or before trail StartTime
       var segmentVisibility = segment.transparent; 
@@ -313,9 +339,20 @@ export default Class.extend({
     });
   },
 
+  _abortAnimation: function() {
+    var _context = this.context;
+    var _this = this;
+    var KEY = _context.KEY;
+    _this.trailsData.forEach(function(d) {
+      if (_this.trailTransitions[d[KEY]]) {
+        _this.trailTransitions[d[KEY]].select('line').interrupt();
+      }
+    });
+  },
 
   _reveal: function(trail, duration, d) {
     var _context = this.context;
+    var _this = this;
     var KEY = _context.KEY;
     var trailStartTime = _context.model.time.timeFormat.parse("" + d.selectedEntityData.trailStartTime);
     var generateTrailSegment = function(trail, index) {
@@ -346,7 +383,7 @@ export default Class.extend({
                 d.firstAvailableSegment = segment.t;
               }
               // fix label position if it not in correct place
-              var cache = _context.labels.cached[d[KEY]];
+              var cache = _context._labels.cached[d[KEY]];
               if (trailStartTime && trailStartTime.toString() == segment.t.toString()) {
                   cache.labelX0 = segment.valueX;
                   cache.labelY0 = segment.valueY;
@@ -399,6 +436,7 @@ export default Class.extend({
                     if(nextFrame.axis_x[d[KEY]]==null || nextFrame.axis_y[d[KEY]]==null) {
                       resolve();
                     } else {
+                      _this.trailTransitions[d[KEY]] = view;
                       var strokeColor = _context.model.marker.color.which == "geo.world_4region"?
                         //use predefined shades for color palette for "geo.world_4region" (hardcoded)
                         _context.model.marker.color.getColorShade({

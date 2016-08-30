@@ -42,7 +42,7 @@ var TimeModel = Model.extend({
     round: 'round',
     delay: 600, //delay between animation frames
     delayThresholdX2: 600, //delay X2 boundary: if less -- then every other frame will be dropped and animation dely will be double the value
-    delayThresholdX4: 600, //delay X4 boundary: if less -- then 3/4 frame will be dropped and animation dely will be 4x the value
+    delayThresholdX4: 300, //delay X4 boundary: if less -- then 3/4 frame will be dropped and animation dely will be 4x the value
     unit: "year",
     step: 1, //step must be integer, and expressed in units
     immediatePlay: false,
@@ -59,12 +59,11 @@ var TimeModel = Model.extend({
 
     this._type = "time";
     //default values for time model
-    var defaults = utils.deepClone(this._defaults);
-    values = utils.extend(defaults, values);
+
+    this._defaults = utils.extend(this._defaults, values);
 
     //same constructor
-    this._super(name, values, parent, bind);
-
+    this._super(name, this._defaults, parent, bind);
     var _this = this;
     this.timeFormat = formats[this.unit];
     this.dragging = false;
@@ -105,6 +104,10 @@ var TimeModel = Model.extend({
     }
   },
 
+  getDefaults: function() {
+    return this._defaults;
+  },
+  
   /*
    * Formatting and parsing functions
    * @param {Date} date

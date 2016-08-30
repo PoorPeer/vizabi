@@ -44,19 +44,23 @@ export default function axisSmart() {
       if(options.transitionDuration > 0) {
         _super(g.transition().duration(options.transitionDuration));
       } else {
-        _super(g);
+       _super(g);
       }
       //if(axis.orient()=="bottom") console.log("received", g.selectAll("text").each(function(d){console.log(d)}))
-
       var orient = axis.orient() == "top" || axis.orient() == "bottom" ? HORIZONTAL : VERTICAL;
       var dimension = (orient == HORIZONTAL && axis.pivot() || orient == VERTICAL && !axis.pivot()) ? Y : X;
+      var boxSize = g.select('.tick').select('text').node().getBBox();
 
       g.selectAll('.vzb-axis-value')
         .data([null])
         .enter().append('g')
         .attr("class", 'vzb-axis-value')
         .classed("vzb-hidden", true)
-        .append("text");
+        .append("text")
+        .style("text-anchor", dimension == X ? "middle" : "end")
+        .attr("dominant-baseline", orient == VERTICAL ? "text-after-edge" :"text-before-edge")
+        .attr("x", dimension == X ? (orient == VERTICAL ? -(axis.tickPadding() + axis.tickSize()) : 0) : -(axis.tickPadding() + axis.tickSize()))
+        .attr("y", dimension == X ? (orient == VERTICAL ? 0: axis.tickPadding() + axis.tickSize()) : 0);
 
       // patch the label positioning after the view is generated
       g.selectAll("text")
@@ -66,10 +70,9 @@ export default function axisSmart() {
           if(axis.pivot() == null) return;
           view.attr("transform", "rotate(" + (axis.pivot() ? -90 : 0) + ")");
           view.style("text-anchor", dimension == X ? "middle" : "end");
-          view.attr("x", dimension == X ? 0 : (-axis.tickPadding() - axis.tickSize()));
-          view.attr("y", dimension == X ? (orient == VERTICAL ? -1 : 1) * (axis.tickPadding() + axis.tickSize()) :
-            0);
-          view.attr("dy", dimension == X ? (orient == VERTICAL ? 0 : ".72em") : ".32em");
+          view.attr("dominant-baseline", dimension == X ? (orient == VERTICAL ? "text-after-edge" :"text-before-edge") : "middle")
+              .attr("dx", dimension == X ? (orient == VERTICAL ? axis.tickPadding() + axis.tickSize() : 0) : 0)
+              .attr("dy", dimension == X ? (orient == VERTICAL ? -axis.tickSize() : -axis.tickSize()) : 0);
         })
       
       if(axis.repositionLabels() != null){
