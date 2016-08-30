@@ -19,6 +19,7 @@ describe('Web - Vizabi e2e test :: All', function() {
   // On large screen there is a side panel with color controls and list of countries
   // Bubble Chart
 
+
   it('LargeScreenBubbleChart', function() {
 
     browser.get(baseUrl + "bubblechart.html" + baseUrlHash);
