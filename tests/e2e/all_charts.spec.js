@@ -38,7 +38,7 @@ describe('Web - Vizabi e2e test :: All', function() {
     colorOption.getText().then(function (colorOptionAsParameter) {
       var colorOptionText = colorOptionAsParameter;
       // Comparing the color option name
-      var findMe = "World Region";
+      var findMe = "World Regions";
       expect(findMe).toBe(colorOptionText);
     });
 
@@ -87,7 +87,7 @@ describe('Web - Vizabi e2e test :: All', function() {
     colorOption.getText().then(function (colorOptionAsParameter) {
       var colorOptionText = colorOptionAsParameter;
       // Comparing the color option name
-      var findMe = "World Region";
+      var findMe = "World Regions";
       expect(findMe).toBe(colorOptionText);
     });
 
@@ -135,7 +135,7 @@ describe('Web - Vizabi e2e test :: All', function() {
     colorOption.getText().then(function (colorOptionAsParameter) {
       var colorOptionText = colorOptionAsParameter;
       // Comparing the color option name
-      var findMe = "World Region";
+      var findMe = "World Regions";
       expect(findMe).toBe(colorOptionText);
     });
 
