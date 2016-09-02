@@ -129,7 +129,6 @@ var ColorLegend = Component.extend({
     var KEY = this.KEY;
 
     var palette = this.colorModel.getPalette();
-    console.log(palette);
     var canShowMap = utils.keys((this.frame||{}).geoshape||{}).length && this.colorModel.use == "property";
 
     var minimapKeys = [];
